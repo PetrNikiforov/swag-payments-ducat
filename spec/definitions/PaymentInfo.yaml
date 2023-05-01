@@ -1,0 +1,20 @@
+type: object
+x-merge-properties:
+  - type: object
+    required:
+      - bankBik
+      - bankName
+      - terminalNumber
+    properties:
+      bankBik:
+        description: БИК банка, через который проведена операция
+        type: string
+        pattern: '^\d{9}$'
+      bankName:
+        description: Наименование банка согласно справочнику банков
+        type: string
+        maxLength: 100
+      terminalNumber:
+        description: Код терминала через который была проведена операция
+        type: string
+
