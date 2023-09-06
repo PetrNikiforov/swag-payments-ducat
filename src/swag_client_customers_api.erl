@@ -27,9 +27,6 @@
 -export([get_customer_events/2]).
 -export([get_customer_events/3]).
 
--export([get_customer_payment_methods/2]).
--export([get_customer_payment_methods/3]).
-
 
 -spec create_binding(Endpoint :: swag_client:endpoint(), Params :: map()) ->
     {ok, Code :: integer(), RespHeaders :: list(), Response :: map()} |
@@ -174,24 +171,6 @@ get_customer_events(Endpoint, Params, Opts) ->
         get_request_spec(get_customer_events),
         Opts
     ), get_customer_events).
-
--spec get_customer_payment_methods(Endpoint :: swag_client:endpoint(), Params :: map()) ->
-    {ok, Code :: integer(), RespHeaders :: list(), Response :: map()} |
-    {error, _Reason}.
-get_customer_payment_methods(Endpoint, Params) ->
-    get_customer_payment_methods(Endpoint, Params, []).
-
--spec get_customer_payment_methods(Endpoint :: swag_client:endpoint(), Params :: map(), Opts :: swag_client:transport_opts()) ->
-    {ok, Code :: integer(), RespHeaders :: list(), Response :: map()} |
-    {error, _Reason}.
-get_customer_payment_methods(Endpoint, Params, Opts) ->
-    process_response(swag_client_procession:process_request(
-        get,
-        swag_client_utils:get_url(Endpoint, "/v2/processing/customers/:customerID/payment-methods"),
-        Params,
-        get_request_spec(get_customer_payment_methods),
-        Opts
-    ), get_customer_payment_methods).
 
 process_response({ok, Code, Headers, RespBody}, OperationID) ->
     try swag_client_procession:process_response(
@@ -375,24 +354,6 @@ get_request_spec('get_customer_events') ->
             rules  => [{type, 'integer'}, {format, 'int32'}, true
 , {required, false}]
         }}
-    ];
-get_request_spec('get_customer_payment_methods') ->
-    [
-        {'X-Request-ID', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 32}, {min_length, 1}, true
-, {required, true}]
-        }},
-        {'customerID', #{
-            source => binding,
-            rules  => [{type, 'binary'}, {max_length, 40}, {min_length, 1}, true
-, {required, true}]
-        }},
-        {'X-Request-Deadline', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 40}, {min_length, 1}, true
-, {required, false}]
-        }}
     ].
 
 -spec get_response_spec(OperationID :: swag_client:operation_id(), Code :: swag_client_procession:code()) ->
@@ -496,18 +457,6 @@ get_response_spec('get_customer_events', 401) ->
     undefined;
 
 get_response_spec('get_customer_events', 404) ->
-    {'GeneralError', 'GeneralError'};
-
-get_response_spec('get_customer_payment_methods', 200) ->
-    {'list', 'PaymentMethod'};
-
-get_response_spec('get_customer_payment_methods', 400) ->
-    {'DefaultLogicError', 'DefaultLogicError'};
-
-get_response_spec('get_customer_payment_methods', 401) ->
-    undefined;
-
-get_response_spec('get_customer_payment_methods', 404) ->
     {'GeneralError', 'GeneralError'};
 
 get_response_spec(_, _) ->
