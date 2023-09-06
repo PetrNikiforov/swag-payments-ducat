@@ -88,14 +88,6 @@ allowed_methods(
 allowed_methods(
     Req,
     State = #state{
-        operation_id = 'GetInvoiceByExternalIDForParty'
-    }
-) ->
-    {[<<"GET">>], Req, State};
-
-allowed_methods(
-    Req,
-    State = #state{
         operation_id = 'GetInvoiceByID'
     }
 ) ->
@@ -220,33 +212,6 @@ is_authorized(
     Req0,
     State = #state{
         operation_id  = 'GetInvoiceByExternalID' = OperationID,
-        logic_handler = LogicHandler,
-        context       = Context
-    }
-) ->
-    From = header,
-    Result = swag_server_handler_api:authorize_api_key(
-        LogicHandler,
-        OperationID,
-        From,
-        'Authorization',
-        Req0,
-        Context
-    ),
-    case Result of
-        {true, AuthContext, Req} ->
-            NewContext = Context#{
-                auth_context => AuthContext
-            },
-            {true, Req, State#state{context = NewContext}};
-        {false, AuthHeader, Req} ->
-            {{false, AuthHeader}, Req, State}
-    end;
-
-is_authorized(
-    Req0,
-    State = #state{
-        operation_id  = 'GetInvoiceByExternalIDForParty' = OperationID,
         logic_handler = LogicHandler,
         context       = Context
     }
@@ -439,16 +404,6 @@ valid_content_headers(
 valid_content_headers(
     Req0,
     State = #state{
-        operation_id = 'GetInvoiceByExternalIDForParty'
-    }
-) ->
-    Headers = ["X-Request-ID","X-Request-Deadline"],
-    {Result, Req} = validate_headers(Headers, Req0),
-    {Result, Req, State};
-
-valid_content_headers(
-    Req0,
-    State = #state{
         operation_id = 'GetInvoiceByID'
     }
 ) ->
@@ -510,8 +465,17 @@ charsets_provided(Req, State) ->
 -spec malformed_request(Req :: cowboy_req:req(), State :: state()) ->
     {Value :: boolean(), Req :: cowboy_req:req(), State :: state()}.
 
-malformed_request(Req, State) ->
-    {false, Req, State}.
+malformed_request(Req, State = #state{context = Context}) ->
+    PeerResult = swag_server_handler_api:determine_peer(Req),
+    case PeerResult of
+        {ok, Peer} ->
+            Context1 = Context#{peer => Peer},
+            State1   = State#state{context = Context1},
+            {false, Req, State1};
+        {error, Reason} ->
+            error_logger:error_msg("Unable to determine client peer: ~p", [Reason]),
+            {true, Req, State}
+    end.
 
 -spec allow_missing_post(Req :: cowboy_req:req(), State :: state()) ->
     {Value :: false, Req :: cowboy_req:req(), State :: state()}.
@@ -668,29 +632,6 @@ get_request_spec('GetInvoiceByExternalID') ->
 , {required, false}]
         }}
     ];
-get_request_spec('GetInvoiceByExternalIDForParty') ->
-    [
-        {'X-Request-ID', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 32}, {min_length, 1}, true
-, {required, true}]
-        }},
-        {'partyID', #{
-            source => binding,
-            rules  => [{type, 'binary'}, true
-, {required, true}]
-        }},
-        {'externalID', #{
-            source => qs_val,
-            rules  => [{type, 'binary'}, {max_length, 40}, {min_length, 1}, true
-, {required, true}]
-        }},
-        {'X-Request-Deadline', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 40}, {min_length, 1}, true
-, {required, false}]
-        }}
-    ];
 get_request_spec('GetInvoiceByID') ->
     [
         {'X-Request-ID', #{
@@ -828,18 +769,6 @@ get_response_spec('GetInvoiceByExternalID', 401) ->
     undefined;
 
 get_response_spec('GetInvoiceByExternalID', 404) ->
-    {'GeneralError', 'GeneralError'};
-
-get_response_spec('GetInvoiceByExternalIDForParty', 200) ->
-    {'Invoice', 'Invoice'};
-
-get_response_spec('GetInvoiceByExternalIDForParty', 400) ->
-    {'DefaultLogicError', 'DefaultLogicError'};
-
-get_response_spec('GetInvoiceByExternalIDForParty', 401) ->
-    undefined;
-
-get_response_spec('GetInvoiceByExternalIDForParty', 404) ->
     {'GeneralError', 'GeneralError'};
 
 get_response_spec('GetInvoiceByID', 200) ->

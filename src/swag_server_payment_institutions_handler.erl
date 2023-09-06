@@ -80,14 +80,6 @@ allowed_methods(
 allowed_methods(
     Req,
     State = #state{
-        operation_id = 'GetPaymentInstitutionPayoutMethodsForParty'
-    }
-) ->
-    {[<<"GET">>], Req, State};
-
-allowed_methods(
-    Req,
-    State = #state{
         operation_id = 'GetPaymentInstitutionPayoutSchedules'
     }
 ) ->
@@ -96,23 +88,7 @@ allowed_methods(
 allowed_methods(
     Req,
     State = #state{
-        operation_id = 'GetPaymentInstitutionPayoutSchedulesForParty'
-    }
-) ->
-    {[<<"GET">>], Req, State};
-
-allowed_methods(
-    Req,
-    State = #state{
         operation_id = 'GetPaymentInstitutions'
-    }
-) ->
-    {[<<"GET">>], Req, State};
-
-allowed_methods(
-    Req,
-    State = #state{
-        operation_id = 'GetServiceProviderByID'
     }
 ) ->
     {[<<"GET">>], Req, State};
@@ -211,33 +187,6 @@ is_authorized(
 is_authorized(
     Req0,
     State = #state{
-        operation_id  = 'GetPaymentInstitutionPayoutMethodsForParty' = OperationID,
-        logic_handler = LogicHandler,
-        context       = Context
-    }
-) ->
-    From = header,
-    Result = swag_server_handler_api:authorize_api_key(
-        LogicHandler,
-        OperationID,
-        From,
-        'Authorization',
-        Req0,
-        Context
-    ),
-    case Result of
-        {true, AuthContext, Req} ->
-            NewContext = Context#{
-                auth_context => AuthContext
-            },
-            {true, Req, State#state{context = NewContext}};
-        {false, AuthHeader, Req} ->
-            {{false, AuthHeader}, Req, State}
-    end;
-
-is_authorized(
-    Req0,
-    State = #state{
         operation_id  = 'GetPaymentInstitutionPayoutSchedules' = OperationID,
         logic_handler = LogicHandler,
         context       = Context
@@ -265,61 +214,7 @@ is_authorized(
 is_authorized(
     Req0,
     State = #state{
-        operation_id  = 'GetPaymentInstitutionPayoutSchedulesForParty' = OperationID,
-        logic_handler = LogicHandler,
-        context       = Context
-    }
-) ->
-    From = header,
-    Result = swag_server_handler_api:authorize_api_key(
-        LogicHandler,
-        OperationID,
-        From,
-        'Authorization',
-        Req0,
-        Context
-    ),
-    case Result of
-        {true, AuthContext, Req} ->
-            NewContext = Context#{
-                auth_context => AuthContext
-            },
-            {true, Req, State#state{context = NewContext}};
-        {false, AuthHeader, Req} ->
-            {{false, AuthHeader}, Req, State}
-    end;
-
-is_authorized(
-    Req0,
-    State = #state{
         operation_id  = 'GetPaymentInstitutions' = OperationID,
-        logic_handler = LogicHandler,
-        context       = Context
-    }
-) ->
-    From = header,
-    Result = swag_server_handler_api:authorize_api_key(
-        LogicHandler,
-        OperationID,
-        From,
-        'Authorization',
-        Req0,
-        Context
-    ),
-    case Result of
-        {true, AuthContext, Req} ->
-            NewContext = Context#{
-                auth_context => AuthContext
-            },
-            {true, Req, State#state{context = NewContext}};
-        {false, AuthHeader, Req} ->
-            {{false, AuthHeader}, Req, State}
-    end;
-
-is_authorized(
-    Req0,
-    State = #state{
-        operation_id  = 'GetServiceProviderByID' = OperationID,
         logic_handler = LogicHandler,
         context       = Context
     }
@@ -394,16 +289,6 @@ valid_content_headers(
 valid_content_headers(
     Req0,
     State = #state{
-        operation_id = 'GetPaymentInstitutionPayoutMethodsForParty'
-    }
-) ->
-    Headers = ["X-Request-ID","X-Request-Deadline"],
-    {Result, Req} = validate_headers(Headers, Req0),
-    {Result, Req, State};
-
-valid_content_headers(
-    Req0,
-    State = #state{
         operation_id = 'GetPaymentInstitutionPayoutSchedules'
     }
 ) ->
@@ -414,27 +299,7 @@ valid_content_headers(
 valid_content_headers(
     Req0,
     State = #state{
-        operation_id = 'GetPaymentInstitutionPayoutSchedulesForParty'
-    }
-) ->
-    Headers = ["X-Request-ID","X-Request-Deadline"],
-    {Result, Req} = validate_headers(Headers, Req0),
-    {Result, Req, State};
-
-valid_content_headers(
-    Req0,
-    State = #state{
         operation_id = 'GetPaymentInstitutions'
-    }
-) ->
-    Headers = ["X-Request-ID","X-Request-Deadline"],
-    {Result, Req} = validate_headers(Headers, Req0),
-    {Result, Req, State};
-
-valid_content_headers(
-    Req0,
-    State = #state{
-        operation_id = 'GetServiceProviderByID'
     }
 ) ->
     Headers = ["X-Request-ID","X-Request-Deadline"],
@@ -465,8 +330,17 @@ charsets_provided(Req, State) ->
 -spec malformed_request(Req :: cowboy_req:req(), State :: state()) ->
     {Value :: boolean(), Req :: cowboy_req:req(), State :: state()}.
 
-malformed_request(Req, State) ->
-    {false, Req, State}.
+malformed_request(Req, State = #state{context = Context}) ->
+    PeerResult = swag_server_handler_api:determine_peer(Req),
+    case PeerResult of
+        {ok, Peer} ->
+            Context1 = Context#{peer => Peer},
+            State1   = State#state{context = Context1},
+            {false, Req, State1};
+        {error, Reason} ->
+            error_logger:error_msg("Unable to determine client peer: ~p", [Reason]),
+            {true, Req, State}
+    end.
 
 -spec allow_missing_post(Req :: cowboy_req:req(), State :: state()) ->
     {Value :: false, Req :: cowboy_req:req(), State :: state()}.
@@ -607,72 +481,11 @@ get_request_spec('GetPaymentInstitutionPayoutMethods') ->
 , {required, false}]
         }}
     ];
-get_request_spec('GetPaymentInstitutionPayoutMethodsForParty') ->
-    [
-        {'X-Request-ID', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 32}, {min_length, 1}, true
-, {required, true}]
-        }},
-        {'partyID', #{
-            source => binding,
-            rules  => [{type, 'binary'}, true
-, {required, true}]
-        }},
-        {'paymentInstitutionID', #{
-            source => binding,
-            rules  => [{type, 'integer'}, {format, 'int32'}, true
-, {required, true}]
-        }},
-        {'X-Request-Deadline', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 40}, {min_length, 1}, true
-, {required, false}]
-        }},
-        {'currency', #{
-            source => qs_val,
-            rules  => [{type, 'binary'}, {pattern, "^[A-Z]{3}$"}, true
-, {required, false}]
-        }}
-    ];
 get_request_spec('GetPaymentInstitutionPayoutSchedules') ->
     [
         {'X-Request-ID', #{
             source => header,
             rules  => [{type, 'binary'}, {max_length, 32}, {min_length, 1}, true
-, {required, true}]
-        }},
-        {'paymentInstitutionID', #{
-            source => binding,
-            rules  => [{type, 'integer'}, {format, 'int32'}, true
-, {required, true}]
-        }},
-        {'X-Request-Deadline', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 40}, {min_length, 1}, true
-, {required, false}]
-        }},
-        {'currency', #{
-            source => qs_val,
-            rules  => [{type, 'binary'}, {pattern, "^[A-Z]{3}$"}, true
-, {required, false}]
-        }},
-        {'payoutMethod', #{
-            source => qs_val,
-            rules  => [{type, 'binary'}, {enum, ['BankAccount', 'InternationalBankAccount', 'Wallet']}, true
-, {required, false}]
-        }}
-    ];
-get_request_spec('GetPaymentInstitutionPayoutSchedulesForParty') ->
-    [
-        {'X-Request-ID', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 32}, {min_length, 1}, true
-, {required, true}]
-        }},
-        {'partyID', #{
-            source => binding,
-            rules  => [{type, 'binary'}, true
 , {required, true}]
         }},
         {'paymentInstitutionID', #{
@@ -718,24 +531,6 @@ get_request_spec('GetPaymentInstitutions') ->
             rules  => [{type, 'binary'}, {enum, ['test', 'live']}, true
 , {required, false}]
         }}
-    ];
-get_request_spec('GetServiceProviderByID') ->
-    [
-        {'X-Request-ID', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 32}, {min_length, 1}, true
-, {required, true}]
-        }},
-        {'serviceProviderID', #{
-            source => binding,
-            rules  => [{type, 'binary'}, {max_length, 100}, {min_length, 1}, true
-, {required, true}]
-        }},
-        {'X-Request-Deadline', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 40}, {min_length, 1}, true
-, {required, false}]
-        }}
     ].
 
 -spec get_response_spec(OperationID :: swag_server:operation_id(), Code :: cowboy:http_status()) ->
@@ -778,18 +573,6 @@ get_response_spec('GetPaymentInstitutionPayoutMethods', 401) ->
 get_response_spec('GetPaymentInstitutionPayoutMethods', 404) ->
     {'GeneralError', 'GeneralError'};
 
-get_response_spec('GetPaymentInstitutionPayoutMethodsForParty', 200) ->
-    {'list', 'string'};
-
-get_response_spec('GetPaymentInstitutionPayoutMethodsForParty', 400) ->
-    {'DefaultLogicError', 'DefaultLogicError'};
-
-get_response_spec('GetPaymentInstitutionPayoutMethodsForParty', 401) ->
-    undefined;
-
-get_response_spec('GetPaymentInstitutionPayoutMethodsForParty', 404) ->
-    {'GeneralError', 'GeneralError'};
-
 get_response_spec('GetPaymentInstitutionPayoutSchedules', 200) ->
     {'list', 'integer'};
 
@@ -802,18 +585,6 @@ get_response_spec('GetPaymentInstitutionPayoutSchedules', 401) ->
 get_response_spec('GetPaymentInstitutionPayoutSchedules', 404) ->
     {'GeneralError', 'GeneralError'};
 
-get_response_spec('GetPaymentInstitutionPayoutSchedulesForParty', 200) ->
-    {'list', 'integer'};
-
-get_response_spec('GetPaymentInstitutionPayoutSchedulesForParty', 400) ->
-    {'DefaultLogicError', 'DefaultLogicError'};
-
-get_response_spec('GetPaymentInstitutionPayoutSchedulesForParty', 401) ->
-    undefined;
-
-get_response_spec('GetPaymentInstitutionPayoutSchedulesForParty', 404) ->
-    {'GeneralError', 'GeneralError'};
-
 get_response_spec('GetPaymentInstitutions', 200) ->
     {'list', 'PaymentInstitution'};
 
@@ -822,15 +593,6 @@ get_response_spec('GetPaymentInstitutions', 400) ->
 
 get_response_spec('GetPaymentInstitutions', 401) ->
     undefined;
-
-get_response_spec('GetServiceProviderByID', 200) ->
-    {'ServiceProvider', 'ServiceProvider'};
-
-get_response_spec('GetServiceProviderByID', 400) ->
-    {'DefaultLogicError', 'DefaultLogicError'};
-
-get_response_spec('GetServiceProviderByID', 404) ->
-    {'GeneralError', 'GeneralError'};
 
 get_response_spec(OperationID, Code) ->
     error({invalid_response_code, OperationID, Code}).

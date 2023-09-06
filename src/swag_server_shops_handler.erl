@@ -56,26 +56,10 @@ init(Req, {_Operations, LogicHandler, SwaggerHandlerOpts} = InitOpts) ->
 allowed_methods(
     Req,
     State = #state{
-        operation_id = 'ActivateShop'
-    }
-) ->
-    {[<<"PUT">>], Req, State};
-
-allowed_methods(
-    Req,
-    State = #state{
         operation_id = 'ActivateShopForParty'
     }
 ) ->
     {[<<"PUT">>], Req, State};
-
-allowed_methods(
-    Req,
-    State = #state{
-        operation_id = 'GetShopByID'
-    }
-) ->
-    {[<<"GET">>], Req, State};
 
 allowed_methods(
     Req,
@@ -88,26 +72,10 @@ allowed_methods(
 allowed_methods(
     Req,
     State = #state{
-        operation_id = 'GetShops'
-    }
-) ->
-    {[<<"GET">>], Req, State};
-
-allowed_methods(
-    Req,
-    State = #state{
         operation_id = 'GetShopsForParty'
     }
 ) ->
     {[<<"GET">>], Req, State};
-
-allowed_methods(
-    Req,
-    State = #state{
-        operation_id = 'SuspendShop'
-    }
-) ->
-    {[<<"PUT">>], Req, State};
 
 allowed_methods(
     Req,
@@ -130,61 +98,7 @@ allowed_methods(Req, State) ->
 is_authorized(
     Req0,
     State = #state{
-        operation_id  = 'ActivateShop' = OperationID,
-        logic_handler = LogicHandler,
-        context       = Context
-    }
-) ->
-    From = header,
-    Result = swag_server_handler_api:authorize_api_key(
-        LogicHandler,
-        OperationID,
-        From,
-        'Authorization',
-        Req0,
-        Context
-    ),
-    case Result of
-        {true, AuthContext, Req} ->
-            NewContext = Context#{
-                auth_context => AuthContext
-            },
-            {true, Req, State#state{context = NewContext}};
-        {false, AuthHeader, Req} ->
-            {{false, AuthHeader}, Req, State}
-    end;
-
-is_authorized(
-    Req0,
-    State = #state{
         operation_id  = 'ActivateShopForParty' = OperationID,
-        logic_handler = LogicHandler,
-        context       = Context
-    }
-) ->
-    From = header,
-    Result = swag_server_handler_api:authorize_api_key(
-        LogicHandler,
-        OperationID,
-        From,
-        'Authorization',
-        Req0,
-        Context
-    ),
-    case Result of
-        {true, AuthContext, Req} ->
-            NewContext = Context#{
-                auth_context => AuthContext
-            },
-            {true, Req, State#state{context = NewContext}};
-        {false, AuthHeader, Req} ->
-            {{false, AuthHeader}, Req, State}
-    end;
-
-is_authorized(
-    Req0,
-    State = #state{
-        operation_id  = 'GetShopByID' = OperationID,
         logic_handler = LogicHandler,
         context       = Context
     }
@@ -238,61 +152,7 @@ is_authorized(
 is_authorized(
     Req0,
     State = #state{
-        operation_id  = 'GetShops' = OperationID,
-        logic_handler = LogicHandler,
-        context       = Context
-    }
-) ->
-    From = header,
-    Result = swag_server_handler_api:authorize_api_key(
-        LogicHandler,
-        OperationID,
-        From,
-        'Authorization',
-        Req0,
-        Context
-    ),
-    case Result of
-        {true, AuthContext, Req} ->
-            NewContext = Context#{
-                auth_context => AuthContext
-            },
-            {true, Req, State#state{context = NewContext}};
-        {false, AuthHeader, Req} ->
-            {{false, AuthHeader}, Req, State}
-    end;
-
-is_authorized(
-    Req0,
-    State = #state{
         operation_id  = 'GetShopsForParty' = OperationID,
-        logic_handler = LogicHandler,
-        context       = Context
-    }
-) ->
-    From = header,
-    Result = swag_server_handler_api:authorize_api_key(
-        LogicHandler,
-        OperationID,
-        From,
-        'Authorization',
-        Req0,
-        Context
-    ),
-    case Result of
-        {true, AuthContext, Req} ->
-            NewContext = Context#{
-                auth_context => AuthContext
-            },
-            {true, Req, State#state{context = NewContext}};
-        {false, AuthHeader, Req} ->
-            {{false, AuthHeader}, Req, State}
-    end;
-
-is_authorized(
-    Req0,
-    State = #state{
-        operation_id  = 'SuspendShop' = OperationID,
         logic_handler = LogicHandler,
         context       = Context
     }
@@ -364,27 +224,7 @@ content_types_accepted(Req, State) ->
 valid_content_headers(
     Req0,
     State = #state{
-        operation_id = 'ActivateShop'
-    }
-) ->
-    Headers = ["X-Request-ID","X-Request-Deadline"],
-    {Result, Req} = validate_headers(Headers, Req0),
-    {Result, Req, State};
-
-valid_content_headers(
-    Req0,
-    State = #state{
         operation_id = 'ActivateShopForParty'
-    }
-) ->
-    Headers = ["X-Request-ID","X-Request-Deadline"],
-    {Result, Req} = validate_headers(Headers, Req0),
-    {Result, Req, State};
-
-valid_content_headers(
-    Req0,
-    State = #state{
-        operation_id = 'GetShopByID'
     }
 ) ->
     Headers = ["X-Request-ID","X-Request-Deadline"],
@@ -404,27 +244,7 @@ valid_content_headers(
 valid_content_headers(
     Req0,
     State = #state{
-        operation_id = 'GetShops'
-    }
-) ->
-    Headers = ["X-Request-ID","X-Request-Deadline"],
-    {Result, Req} = validate_headers(Headers, Req0),
-    {Result, Req, State};
-
-valid_content_headers(
-    Req0,
-    State = #state{
         operation_id = 'GetShopsForParty'
-    }
-) ->
-    Headers = ["X-Request-ID","X-Request-Deadline"],
-    {Result, Req} = validate_headers(Headers, Req0),
-    {Result, Req, State};
-
-valid_content_headers(
-    Req0,
-    State = #state{
-        operation_id = 'SuspendShop'
     }
 ) ->
     Headers = ["X-Request-ID","X-Request-Deadline"],
@@ -465,8 +285,17 @@ charsets_provided(Req, State) ->
 -spec malformed_request(Req :: cowboy_req:req(), State :: state()) ->
     {Value :: boolean(), Req :: cowboy_req:req(), State :: state()}.
 
-malformed_request(Req, State) ->
-    {false, Req, State}.
+malformed_request(Req, State = #state{context = Context}) ->
+    PeerResult = swag_server_handler_api:determine_peer(Req),
+    case PeerResult of
+        {ok, Peer} ->
+            Context1 = Context#{peer => Peer},
+            State1   = State#state{context = Context1},
+            {false, Req, State1};
+        {error, Reason} ->
+            error_logger:error_msg("Unable to determine client peer: ~p", [Reason]),
+            {true, Req, State}
+    end.
 
 -spec allow_missing_post(Req :: cowboy_req:req(), State :: state()) ->
     {Value :: false, Req :: cowboy_req:req(), State :: state()}.
@@ -548,24 +377,6 @@ validate_headers(_, Req) ->
     Spec :: swag_server_handler_api:request_spec() | no_return().
 
 
-get_request_spec('ActivateShop') ->
-    [
-        {'X-Request-ID', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 32}, {min_length, 1}, true
-, {required, true}]
-        }},
-        {'shopID', #{
-            source => binding,
-            rules  => [{type, 'binary'}, {max_length, 40}, {min_length, 1}, true
-, {required, true}]
-        }},
-        {'X-Request-Deadline', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 40}, {min_length, 1}, true
-, {required, false}]
-        }}
-    ];
 get_request_spec('ActivateShopForParty') ->
     [
         {'X-Request-ID', #{
@@ -581,24 +392,6 @@ get_request_spec('ActivateShopForParty') ->
         {'partyID', #{
             source => binding,
             rules  => [{type, 'binary'}, true
-, {required, true}]
-        }},
-        {'X-Request-Deadline', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 40}, {min_length, 1}, true
-, {required, false}]
-        }}
-    ];
-get_request_spec('GetShopByID') ->
-    [
-        {'X-Request-ID', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 32}, {min_length, 1}, true
-, {required, true}]
-        }},
-        {'shopID', #{
-            source => binding,
-            rules  => [{type, 'binary'}, {max_length, 40}, {min_length, 1}, true
 , {required, true}]
         }},
         {'X-Request-Deadline', #{
@@ -630,19 +423,6 @@ get_request_spec('GetShopByIDForParty') ->
 , {required, false}]
         }}
     ];
-get_request_spec('GetShops') ->
-    [
-        {'X-Request-ID', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 32}, {min_length, 1}, true
-, {required, true}]
-        }},
-        {'X-Request-Deadline', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 40}, {min_length, 1}, true
-, {required, false}]
-        }}
-    ];
 get_request_spec('GetShopsForParty') ->
     [
         {'X-Request-ID', #{
@@ -653,24 +433,6 @@ get_request_spec('GetShopsForParty') ->
         {'partyID', #{
             source => binding,
             rules  => [{type, 'binary'}, true
-, {required, true}]
-        }},
-        {'X-Request-Deadline', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 40}, {min_length, 1}, true
-, {required, false}]
-        }}
-    ];
-get_request_spec('SuspendShop') ->
-    [
-        {'X-Request-ID', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 32}, {min_length, 1}, true
-, {required, true}]
-        }},
-        {'shopID', #{
-            source => binding,
-            rules  => [{type, 'binary'}, {max_length, 40}, {min_length, 1}, true
 , {required, true}]
         }},
         {'X-Request-Deadline', #{
@@ -707,18 +469,6 @@ get_request_spec('SuspendShopForParty') ->
     Spec :: swag_server_handler_api:response_spec() | no_return().
 
 
-get_response_spec('ActivateShop', 204) ->
-    undefined;
-
-get_response_spec('ActivateShop', 400) ->
-    {'DefaultLogicError', 'DefaultLogicError'};
-
-get_response_spec('ActivateShop', 401) ->
-    undefined;
-
-get_response_spec('ActivateShop', 404) ->
-    {'GeneralError', 'GeneralError'};
-
 get_response_spec('ActivateShopForParty', 204) ->
     undefined;
 
@@ -729,18 +479,6 @@ get_response_spec('ActivateShopForParty', 401) ->
     undefined;
 
 get_response_spec('ActivateShopForParty', 404) ->
-    {'GeneralError', 'GeneralError'};
-
-get_response_spec('GetShopByID', 200) ->
-    {'Shop', 'Shop'};
-
-get_response_spec('GetShopByID', 400) ->
-    {'DefaultLogicError', 'DefaultLogicError'};
-
-get_response_spec('GetShopByID', 401) ->
-    undefined;
-
-get_response_spec('GetShopByID', 404) ->
     {'GeneralError', 'GeneralError'};
 
 get_response_spec('GetShopByIDForParty', 200) ->
@@ -755,15 +493,6 @@ get_response_spec('GetShopByIDForParty', 401) ->
 get_response_spec('GetShopByIDForParty', 404) ->
     {'GeneralError', 'GeneralError'};
 
-get_response_spec('GetShops', 200) ->
-    {'list', 'Shop'};
-
-get_response_spec('GetShops', 400) ->
-    {'DefaultLogicError', 'DefaultLogicError'};
-
-get_response_spec('GetShops', 401) ->
-    undefined;
-
 get_response_spec('GetShopsForParty', 200) ->
     {'list', 'Shop'};
 
@@ -774,18 +503,6 @@ get_response_spec('GetShopsForParty', 401) ->
     undefined;
 
 get_response_spec('GetShopsForParty', 404) ->
-    {'GeneralError', 'GeneralError'};
-
-get_response_spec('SuspendShop', 204) ->
-    undefined;
-
-get_response_spec('SuspendShop', 400) ->
-    {'DefaultLogicError', 'DefaultLogicError'};
-
-get_response_spec('SuspendShop', 401) ->
-    undefined;
-
-get_response_spec('SuspendShop', 404) ->
     {'GeneralError', 'GeneralError'};
 
 get_response_spec('SuspendShopForParty', 204) ->

@@ -85,14 +85,6 @@ allowed_methods(
 ) ->
     {[<<"GET">>], Req, State};
 
-allowed_methods(
-    Req,
-    State = #state{
-        operation_id = 'GetWebhooksForParty'
-    }
-) ->
-    {[<<"GET">>], Req, State};
-
 allowed_methods(Req, State) ->
     {[], Req, State}.
 
@@ -211,33 +203,6 @@ is_authorized(
             {{false, AuthHeader}, Req, State}
     end;
 
-is_authorized(
-    Req0,
-    State = #state{
-        operation_id  = 'GetWebhooksForParty' = OperationID,
-        logic_handler = LogicHandler,
-        context       = Context
-    }
-) ->
-    From = header,
-    Result = swag_server_handler_api:authorize_api_key(
-        LogicHandler,
-        OperationID,
-        From,
-        'Authorization',
-        Req0,
-        Context
-    ),
-    case Result of
-        {true, AuthContext, Req} ->
-            NewContext = Context#{
-                auth_context => AuthContext
-            },
-            {true, Req, State#state{context = NewContext}};
-        {false, AuthHeader, Req} ->
-            {{false, AuthHeader}, Req, State}
-    end;
-
 is_authorized(Req, State) ->
     {{false, <<"">>}, Req, State}.
 
@@ -296,16 +261,6 @@ valid_content_headers(
     {Result, Req} = validate_headers(Headers, Req0),
     {Result, Req, State};
 
-valid_content_headers(
-    Req0,
-    State = #state{
-        operation_id = 'GetWebhooksForParty'
-    }
-) ->
-    Headers = ["X-Request-ID","X-Request-Deadline"],
-    {Result, Req} = validate_headers(Headers, Req0),
-    {Result, Req, State};
-
 valid_content_headers(Req, State) ->
     {false, Req, State}.
 
@@ -330,8 +285,17 @@ charsets_provided(Req, State) ->
 -spec malformed_request(Req :: cowboy_req:req(), State :: state()) ->
     {Value :: boolean(), Req :: cowboy_req:req(), State :: state()}.
 
-malformed_request(Req, State) ->
-    {false, Req, State}.
+malformed_request(Req, State = #state{context = Context}) ->
+    PeerResult = swag_server_handler_api:determine_peer(Req),
+    case PeerResult of
+        {ok, Peer} ->
+            Context1 = Context#{peer => Peer},
+            State1   = State#state{context = Context1},
+            {false, Req, State1};
+        {error, Reason} ->
+            error_logger:error_msg("Unable to determine client peer: ~p", [Reason]),
+            {true, Req, State}
+    end.
 
 -spec allow_missing_post(Req :: cowboy_req:req(), State :: state()) ->
     {Value :: false, Req :: cowboy_req:req(), State :: state()}.
@@ -478,24 +442,6 @@ get_request_spec('GetWebhooks') ->
             rules  => [{type, 'binary'}, {max_length, 40}, {min_length, 1}, true
 , {required, false}]
         }}
-    ];
-get_request_spec('GetWebhooksForParty') ->
-    [
-        {'X-Request-ID', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 32}, {min_length, 1}, true
-, {required, true}]
-        }},
-        {'partyID', #{
-            source => binding,
-            rules  => [{type, 'binary'}, true
-, {required, true}]
-        }},
-        {'X-Request-Deadline', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 40}, {min_length, 1}, true
-, {required, false}]
-        }}
     ].
 
 -spec get_response_spec(OperationID :: swag_server:operation_id(), Code :: cowboy:http_status()) ->
@@ -545,15 +491,6 @@ get_response_spec('GetWebhooks', 400) ->
     {'DefaultLogicError', 'DefaultLogicError'};
 
 get_response_spec('GetWebhooks', 401) ->
-    undefined;
-
-get_response_spec('GetWebhooksForParty', 200) ->
-    {'list', 'Webhook'};
-
-get_response_spec('GetWebhooksForParty', 400) ->
-    {'DefaultLogicError', 'DefaultLogicError'};
-
-get_response_spec('GetWebhooksForParty', 401) ->
     undefined;
 
 get_response_spec(OperationID, Code) ->

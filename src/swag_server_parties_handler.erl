@@ -56,14 +56,6 @@ init(Req, {_Operations, LogicHandler, SwaggerHandlerOpts} = InitOpts) ->
 allowed_methods(
     Req,
     State = #state{
-        operation_id = 'ActivateMyParty'
-    }
-) ->
-    {[<<"PUT">>], Req, State};
-
-allowed_methods(
-    Req,
-    State = #state{
         operation_id = 'ActivatePartyByID'
     }
 ) ->
@@ -72,26 +64,10 @@ allowed_methods(
 allowed_methods(
     Req,
     State = #state{
-        operation_id = 'GetMyParty'
-    }
-) ->
-    {[<<"GET">>], Req, State};
-
-allowed_methods(
-    Req,
-    State = #state{
         operation_id = 'GetPartyByID'
     }
 ) ->
     {[<<"GET">>], Req, State};
-
-allowed_methods(
-    Req,
-    State = #state{
-        operation_id = 'SuspendMyParty'
-    }
-) ->
-    {[<<"PUT">>], Req, State};
 
 allowed_methods(
     Req,
@@ -110,33 +86,6 @@ allowed_methods(Req, State) ->
         Req   :: cowboy_req:req(),
         State :: state()
     }.
-
-is_authorized(
-    Req0,
-    State = #state{
-        operation_id  = 'ActivateMyParty' = OperationID,
-        logic_handler = LogicHandler,
-        context       = Context
-    }
-) ->
-    From = header,
-    Result = swag_server_handler_api:authorize_api_key(
-        LogicHandler,
-        OperationID,
-        From,
-        'Authorization',
-        Req0,
-        Context
-    ),
-    case Result of
-        {true, AuthContext, Req} ->
-            NewContext = Context#{
-                auth_context => AuthContext
-            },
-            {true, Req, State#state{context = NewContext}};
-        {false, AuthHeader, Req} ->
-            {{false, AuthHeader}, Req, State}
-    end;
 
 is_authorized(
     Req0,
@@ -168,61 +117,7 @@ is_authorized(
 is_authorized(
     Req0,
     State = #state{
-        operation_id  = 'GetMyParty' = OperationID,
-        logic_handler = LogicHandler,
-        context       = Context
-    }
-) ->
-    From = header,
-    Result = swag_server_handler_api:authorize_api_key(
-        LogicHandler,
-        OperationID,
-        From,
-        'Authorization',
-        Req0,
-        Context
-    ),
-    case Result of
-        {true, AuthContext, Req} ->
-            NewContext = Context#{
-                auth_context => AuthContext
-            },
-            {true, Req, State#state{context = NewContext}};
-        {false, AuthHeader, Req} ->
-            {{false, AuthHeader}, Req, State}
-    end;
-
-is_authorized(
-    Req0,
-    State = #state{
         operation_id  = 'GetPartyByID' = OperationID,
-        logic_handler = LogicHandler,
-        context       = Context
-    }
-) ->
-    From = header,
-    Result = swag_server_handler_api:authorize_api_key(
-        LogicHandler,
-        OperationID,
-        From,
-        'Authorization',
-        Req0,
-        Context
-    ),
-    case Result of
-        {true, AuthContext, Req} ->
-            NewContext = Context#{
-                auth_context => AuthContext
-            },
-            {true, Req, State#state{context = NewContext}};
-        {false, AuthHeader, Req} ->
-            {{false, AuthHeader}, Req, State}
-    end;
-
-is_authorized(
-    Req0,
-    State = #state{
-        operation_id  = 'SuspendMyParty' = OperationID,
         logic_handler = LogicHandler,
         context       = Context
     }
@@ -294,16 +189,6 @@ content_types_accepted(Req, State) ->
 valid_content_headers(
     Req0,
     State = #state{
-        operation_id = 'ActivateMyParty'
-    }
-) ->
-    Headers = ["X-Request-ID","X-Request-Deadline"],
-    {Result, Req} = validate_headers(Headers, Req0),
-    {Result, Req, State};
-
-valid_content_headers(
-    Req0,
-    State = #state{
         operation_id = 'ActivatePartyByID'
     }
 ) ->
@@ -314,27 +199,7 @@ valid_content_headers(
 valid_content_headers(
     Req0,
     State = #state{
-        operation_id = 'GetMyParty'
-    }
-) ->
-    Headers = ["X-Request-ID","X-Request-Deadline"],
-    {Result, Req} = validate_headers(Headers, Req0),
-    {Result, Req, State};
-
-valid_content_headers(
-    Req0,
-    State = #state{
         operation_id = 'GetPartyByID'
-    }
-) ->
-    Headers = ["X-Request-ID","X-Request-Deadline"],
-    {Result, Req} = validate_headers(Headers, Req0),
-    {Result, Req, State};
-
-valid_content_headers(
-    Req0,
-    State = #state{
-        operation_id = 'SuspendMyParty'
     }
 ) ->
     Headers = ["X-Request-ID","X-Request-Deadline"],
@@ -375,8 +240,17 @@ charsets_provided(Req, State) ->
 -spec malformed_request(Req :: cowboy_req:req(), State :: state()) ->
     {Value :: boolean(), Req :: cowboy_req:req(), State :: state()}.
 
-malformed_request(Req, State) ->
-    {false, Req, State}.
+malformed_request(Req, State = #state{context = Context}) ->
+    PeerResult = swag_server_handler_api:determine_peer(Req),
+    case PeerResult of
+        {ok, Peer} ->
+            Context1 = Context#{peer => Peer},
+            State1   = State#state{context = Context1},
+            {false, Req, State1};
+        {error, Reason} ->
+            error_logger:error_msg("Unable to determine client peer: ~p", [Reason]),
+            {true, Req, State}
+    end.
 
 -spec allow_missing_post(Req :: cowboy_req:req(), State :: state()) ->
     {Value :: false, Req :: cowboy_req:req(), State :: state()}.
@@ -458,19 +332,6 @@ validate_headers(_, Req) ->
     Spec :: swag_server_handler_api:request_spec() | no_return().
 
 
-get_request_spec('ActivateMyParty') ->
-    [
-        {'X-Request-ID', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 32}, {min_length, 1}, true
-, {required, true}]
-        }},
-        {'X-Request-Deadline', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 40}, {min_length, 1}, true
-, {required, false}]
-        }}
-    ];
 get_request_spec('ActivatePartyByID') ->
     [
         {'X-Request-ID', #{
@@ -489,19 +350,6 @@ get_request_spec('ActivatePartyByID') ->
 , {required, false}]
         }}
     ];
-get_request_spec('GetMyParty') ->
-    [
-        {'X-Request-ID', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 32}, {min_length, 1}, true
-, {required, true}]
-        }},
-        {'X-Request-Deadline', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 40}, {min_length, 1}, true
-, {required, false}]
-        }}
-    ];
 get_request_spec('GetPartyByID') ->
     [
         {'X-Request-ID', #{
@@ -512,19 +360,6 @@ get_request_spec('GetPartyByID') ->
         {'partyID', #{
             source => binding,
             rules  => [{type, 'binary'}, true
-, {required, true}]
-        }},
-        {'X-Request-Deadline', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 40}, {min_length, 1}, true
-, {required, false}]
-        }}
-    ];
-get_request_spec('SuspendMyParty') ->
-    [
-        {'X-Request-ID', #{
-            source => header,
-            rules  => [{type, 'binary'}, {max_length, 32}, {min_length, 1}, true
 , {required, true}]
         }},
         {'X-Request-Deadline', #{
@@ -556,15 +391,6 @@ get_request_spec('SuspendPartyByID') ->
     Spec :: swag_server_handler_api:response_spec() | no_return().
 
 
-get_response_spec('ActivateMyParty', 204) ->
-    undefined;
-
-get_response_spec('ActivateMyParty', 400) ->
-    {'DefaultLogicError', 'DefaultLogicError'};
-
-get_response_spec('ActivateMyParty', 401) ->
-    undefined;
-
 get_response_spec('ActivatePartyByID', 204) ->
     undefined;
 
@@ -577,15 +403,6 @@ get_response_spec('ActivatePartyByID', 401) ->
 get_response_spec('ActivatePartyByID', 404) ->
     {'GeneralError', 'GeneralError'};
 
-get_response_spec('GetMyParty', 200) ->
-    {'Party', 'Party'};
-
-get_response_spec('GetMyParty', 400) ->
-    {'DefaultLogicError', 'DefaultLogicError'};
-
-get_response_spec('GetMyParty', 401) ->
-    undefined;
-
 get_response_spec('GetPartyByID', 200) ->
     {'Party', 'Party'};
 
@@ -597,15 +414,6 @@ get_response_spec('GetPartyByID', 401) ->
 
 get_response_spec('GetPartyByID', 404) ->
     {'GeneralError', 'GeneralError'};
-
-get_response_spec('SuspendMyParty', 204) ->
-    undefined;
-
-get_response_spec('SuspendMyParty', 400) ->
-    {'DefaultLogicError', 'DefaultLogicError'};
-
-get_response_spec('SuspendMyParty', 401) ->
-    undefined;
 
 get_response_spec('SuspendPartyByID', 204) ->
     undefined;

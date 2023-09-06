@@ -190,11 +190,6 @@ get_operations() ->
             method => <<"GET">>,
             handler => 'swag_server_customers_handler'
         },
-        'GetCustomerPaymentMethods' => #{
-            path => "/v2/processing/customers/:customerID/payment-methods",
-            method => <<"GET">>,
-            handler => 'swag_server_customers_handler'
-        },
         'CreateInvoiceTemplate' => #{
             path => "/v2/processing/invoice-templates",
             method => <<"POST">>,
@@ -245,11 +240,6 @@ get_operations() ->
             method => <<"GET">>,
             handler => 'swag_server_invoices_handler'
         },
-        'GetInvoiceByExternalIDForParty' => #{
-            path => "/v2/processing/parties/:partyID/invoices",
-            method => <<"GET">>,
-            handler => 'swag_server_invoices_handler'
-        },
         'GetInvoiceByID' => #{
             path => "/v2/processing/invoices/:invoiceID",
             method => <<"GET">>,
@@ -270,29 +260,14 @@ get_operations() ->
             method => <<"POST">>,
             handler => 'swag_server_invoices_handler'
         },
-        'ActivateMyParty' => #{
-            path => "/v2/processing/me/activate",
-            method => <<"PUT">>,
-            handler => 'swag_server_parties_handler'
-        },
         'ActivatePartyByID' => #{
             path => "/v2/processing/parties/:partyID/activate",
             method => <<"PUT">>,
             handler => 'swag_server_parties_handler'
         },
-        'GetMyParty' => #{
-            path => "/v2/processing/me",
-            method => <<"GET">>,
-            handler => 'swag_server_parties_handler'
-        },
         'GetPartyByID' => #{
             path => "/v2/processing/parties/:partyID",
             method => <<"GET">>,
-            handler => 'swag_server_parties_handler'
-        },
-        'SuspendMyParty' => #{
-            path => "/v2/processing/me/suspend",
-            method => <<"PUT">>,
             handler => 'swag_server_parties_handler'
         },
         'SuspendPartyByID' => #{
@@ -315,28 +290,13 @@ get_operations() ->
             method => <<"GET">>,
             handler => 'swag_server_payment_institutions_handler'
         },
-        'GetPaymentInstitutionPayoutMethodsForParty' => #{
-            path => "/v2/processing/parties/:partyID/payment-institutions/:paymentInstitutionID/terms/payouts/methods",
-            method => <<"GET">>,
-            handler => 'swag_server_payment_institutions_handler'
-        },
         'GetPaymentInstitutionPayoutSchedules' => #{
             path => "/v2/processing/payment-institutions/:paymentInstitutionID/terms/payouts/schedules",
             method => <<"GET">>,
             handler => 'swag_server_payment_institutions_handler'
         },
-        'GetPaymentInstitutionPayoutSchedulesForParty' => #{
-            path => "/v2/processing/parties/:partyID/payment-institutions/:paymentInstitutionID/terms/payouts/schedules",
-            method => <<"GET">>,
-            handler => 'swag_server_payment_institutions_handler'
-        },
         'GetPaymentInstitutions' => #{
             path => "/v2/processing/payment-institutions",
-            method => <<"GET">>,
-            handler => 'swag_server_payment_institutions_handler'
-        },
-        'GetServiceProviderByID' => #{
-            path => "/v2/processing/service-providers/:serviceProviderID",
             method => <<"GET">>,
             handler => 'swag_server_payment_institutions_handler'
         },
@@ -375,11 +335,6 @@ get_operations() ->
             method => <<"GET">>,
             handler => 'swag_server_payments_handler'
         },
-        'GetPaymentByExternalIDForParty' => #{
-            path => "/v2/processing/parties/:partyID/payments",
-            method => <<"GET">>,
-            handler => 'swag_server_payments_handler'
-        },
         'GetPaymentByID' => #{
             path => "/v2/processing/invoices/:invoiceID/payments/:paymentID",
             method => <<"GET">>,
@@ -392,11 +347,6 @@ get_operations() ->
         },
         'GetRefundByExternalID' => #{
             path => "/v2/processing/refunds",
-            method => <<"GET">>,
-            handler => 'swag_server_payments_handler'
-        },
-        'GetRefundByExternalIDForParty' => #{
-            path => "/v2/processing/parties/:partyID/refunds",
             method => <<"GET">>,
             handler => 'swag_server_payments_handler'
         },
@@ -445,39 +395,14 @@ get_operations() ->
             method => <<"GET">>,
             handler => 'swag_server_payouts_handler'
         },
-        'SearchInvoices' => #{
-            path => "/v2/analytics/shops/:shopID/invoices",
-            method => <<"GET">>,
-            handler => 'swag_server_search_handler'
-        },
         'SearchPayments' => #{
             path => "/v2/analytics/shops/:shopID/payments",
             method => <<"GET">>,
             handler => 'swag_server_search_handler'
         },
-        'SearchPayouts' => #{
-            path => "/v2/analytics/shops/:shopID/payouts",
-            method => <<"GET">>,
-            handler => 'swag_server_search_handler'
-        },
-        'SearchRefunds' => #{
-            path => "/v2/analytics/shops/:shopID/refunds",
-            method => <<"GET">>,
-            handler => 'swag_server_search_handler'
-        },
-        'ActivateShop' => #{
-            path => "/v2/processing/shops/:shopID/activate",
-            method => <<"PUT">>,
-            handler => 'swag_server_shops_handler'
-        },
         'ActivateShopForParty' => #{
             path => "/v2/processing/parties/:partyID/shops/:shopID/activate",
             method => <<"PUT">>,
-            handler => 'swag_server_shops_handler'
-        },
-        'GetShopByID' => #{
-            path => "/v2/processing/shops/:shopID",
-            method => <<"GET">>,
             handler => 'swag_server_shops_handler'
         },
         'GetShopByIDForParty' => #{
@@ -485,19 +410,9 @@ get_operations() ->
             method => <<"GET">>,
             handler => 'swag_server_shops_handler'
         },
-        'GetShops' => #{
-            path => "/v2/processing/shops",
-            method => <<"GET">>,
-            handler => 'swag_server_shops_handler'
-        },
         'GetShopsForParty' => #{
             path => "/v2/processing/parties/:partyID/shops",
             method => <<"GET">>,
-            handler => 'swag_server_shops_handler'
-        },
-        'SuspendShop' => #{
-            path => "/v2/processing/shops/:shopID/suspend",
-            method => <<"PUT">>,
             handler => 'swag_server_shops_handler'
         },
         'SuspendShopForParty' => #{
@@ -537,11 +452,6 @@ get_operations() ->
         },
         'GetWebhooks' => #{
             path => "/v2/processing/webhooks",
-            method => <<"GET">>,
-            handler => 'swag_server_webhooks_handler'
-        },
-        'GetWebhooksForParty' => #{
-            path => "/v2/processing/parties/:partyID/webhooks",
             method => <<"GET">>,
             handler => 'swag_server_webhooks_handler'
         }
